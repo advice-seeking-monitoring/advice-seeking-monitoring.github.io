@@ -1,0 +1,299 @@
+/* The test monitor's styles: system fonts, one accent colour, light and dark (prefers-color-scheme).
+   Nothing is loaded from elsewhere: the Content-Security-Policy in index.html allows this file only.
+   NOTE: [thought process] the colours are variables, set once for light and once for dark, so every
+   rule below works in both. */
+:root {
+  color-scheme: light dark;
+  --background: #f4f5f7;
+  --surface: #ffffff;
+  --sunken: #f0f2f5;
+  --line: #e1e4e8;
+  --line-strong: #c8cdd4;
+  /* the border of a field, a select or a button: at least 3:1 against the surface (WCAG 1.4.11), where the
+     decorative lines above are fainter */
+  --control-line: #8a939e;
+  --text: #1b1f24;
+  --muted: #5b6672;
+  --accent: #3550b8;
+  --accent-soft: #e8ecfb;
+  --on-accent: #ffffff;
+  --good: #1c7536;
+  --good-soft: #e2f3e7;
+  --warn: #965000;
+  --warn-soft: #fcefdb;
+  --bad: #b3261e;
+  --bad-soft: #fbe8e6;
+  --teal: #0b7285;
+  --edge-shadow: rgb(0 0 0 / 0.16);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1115;
+    --surface: #171a20;
+    --sunken: #1e2229;
+    --line: #2b3038;
+    --line-strong: #3d444f;
+    --control-line: #6b7480;
+    --text: #e3e6ea;
+    --muted: #9aa4b0;
+    --accent: #9fb2ff;
+    --accent-soft: #232b48;
+    --on-accent: #10131a;
+    --good: #74d08f;
+    --good-soft: #163020;
+    --warn: #f0b46b;
+    --warn-soft: #362712;
+    --bad: #ff958b;
+    --bad-soft: #3b1c1a;
+    --teal: #66d0e4;
+    --edge-shadow: rgb(0 0 0 / 0.7);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--background); color: var(--text); font: 15px/1.45 var(--sans); }
+h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[tabindex="-1"]:focus { outline: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+button {
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+}
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.55; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+/* ---------------- sign-in ---------------- */
+.sign-in { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem 1rem; }
+.card {
+  width: min(100%, 23rem);
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.75rem 1.5rem 1.4rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 10px 30px rgb(0 0 0 / 0.05);
+}
+.card h1 { font-size: 1.25rem; }
+.card .lead { margin: 0 0 0.6rem; color: var(--muted); font-size: 0.92rem; }
+.card label { margin-top: 0.35rem; font-size: 0.85rem; font-weight: 600; }
+/* (text of 16 px in the fields and the selects: iOS Safari zooms into one whose text is smaller) */
+.card input { padding: 0.5rem 0.65rem; background: var(--surface); border: 1px solid var(--control-line); border-radius: 6px; font-size: 1rem; }
+.card button { margin-top: 0.85rem; padding: 0.55rem; }
+/* (kept on the page while empty, so a screen reader announces each new message) */
+.notice { margin: 0.3rem 0 0; padding: 0.5rem 0.7rem; border-radius: 6px; background: var(--warn-soft); color: var(--warn); font-size: 0.9rem; }
+.notice:empty { padding: 0; }
+.server-note { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.8rem; overflow-wrap: anywhere; }
+
+/* ---------------- the monitor ---------------- */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 0.7rem max(1rem, calc((100% - 88rem) / 2 + 1rem));
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.topbar h1 { font-size: 1.05rem; }
+.account { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; color: var(--muted); font-size: 0.9rem; }
+.account strong { color: var(--text); }
+.monitor { max-width: 88rem; margin: 0 auto; padding: 1rem 1rem 3rem; display: grid; gap: 1rem; }
+.monitor > * { min-width: 0; }
+
+/* the study server, in five tiles: one row on wide screens; two columns, the classifier across, on narrow ones */
+.tiles { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); grid-auto-flow: row dense; gap: 0.6rem; }
+.tile.wide { grid-column: 1 / -1; }
+/* (the classifier's column is never narrower than its id, which has no place to break) */
+@media (min-width: 1000px) { .tiles { grid-template-columns: 1fr minmax(max-content, 2.4fr) 1.2fr 1.5fr 2fr; } .tile.wide { grid-column: auto; } }
+.tile { min-width: 0; padding: 0.6rem 0.85rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.tile dt { color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.tile dd { margin: 0.15rem 0 0; font-weight: 600; overflow-wrap: anywhere; }
+.tile .mono { font-family: var(--mono); font-size: 0.85rem; }
+.tile ul { margin: 0; padding-left: 1.1rem; font-size: 0.88rem; font-weight: 500; }
+.tile[data-tone="problem"] { background: var(--bad-soft); border-color: var(--bad); }
+.tile[data-tone="problem"] dd { color: var(--bad); }
+
+/* filters and refresh: they stay at the top while the timeline scrolls (on wide screens) */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem 1.5rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+/* NOTE: [edge case callout] a browser scrolls a focused element into view only when it is outside the window,
+   not when it sits under the sticky toolbar: scroll-padding-top counts the toolbar's height (two lines and the
+   refresh-problem line, about 10 rem) as out of view. From 761px, where the phone rules below end. */
+@media (min-width: 761px) {
+  .toolbar { position: sticky; top: 0; z-index: 2; box-shadow: 0 4px 12px rgb(0 0 0 / 0.04); }
+  html { scroll-padding-top: 10.5rem; }
+}
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; }
+.filters label { display: grid; gap: 0.15rem; color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.filters select {
+  min-width: 10.5rem;
+  max-width: 100%;
+  padding: 0.3rem 0.45rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--control-line);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.refresh { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; color: var(--muted); font-size: 0.875rem; }
+.toggle { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.toggle input { margin: 0; accent-color: var(--accent); }
+.problem-line { flex-basis: 100%; margin: 0; color: var(--bad); font-size: 0.875rem; }
+
+.empty { margin: 0; padding: 2.5rem 1rem; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 10px; }
+
+.panel { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; padding: 0.7rem 0.9rem 0.55rem; }
+.section-head h2 { font-size: 1rem; }
+.count { color: var(--muted); font-size: 0.85rem; }
+.note { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
+.quiet { margin: 0; padding: 0.9rem; color: var(--muted); font-size: 0.9rem; }
+.legend { margin: 0; padding: 0.55rem 0.9rem 0.75rem; color: var(--muted); font-size: 0.78rem; border-top: 1px solid var(--line); }
+
+/* ---------------- tables: compact; numbers right-aligned, every digit the same width ---------------- */
+.table-scroll {
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  /* NOTE: [pedagogical] a soft shadow at an edge where the table goes on, drawn without script: the two
+     "scroll" gradients stay at the box's edges, and the two "local" ones, in the panel's colour, move with
+     the table and cover a shadow once that end of the table is in view. (The first layer is on top.) */
+  background:
+    linear-gradient(to right, var(--surface) 40%, transparent) left / 2.5rem 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 40%, transparent) right / 2.5rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--edge-shadow), transparent) left / 0.8rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--edge-shadow), transparent) right / 0.8rem 100% no-repeat scroll;
+}
+/* NOTE: [thought process] separate borders (with no space between cells) look the same here, since cells
+   have bottom borders only, but each cell draws its own, so a sticky cell's border moves with it; collapsed
+   borders are drawn by the table, and the sticky cell's background would cover them */
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+tbody > tr > :first-child, thead > tr:first-child > :first-child { padding-left: 0.9rem; }
+/* (a header may wrap, so the columns are as wide as their numbers; the cells below wrap only a long participant id) */
+thead th { background: var(--sunken); color: var(--muted); font-size: 0.75rem; font-weight: 600; vertical-align: bottom; white-space: normal; }
+thead th.group { text-align: center; border-bottom-color: var(--line-strong); }
+thead .sub { display: block; font-weight: 400; white-space: nowrap; }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody tr:hover > * { background: var(--sunken); }
+.number { text-align: right; }
+/* (zeros recede, in the muted colour, and stay readable: its contrast is above 4.5:1 in both themes) */
+td.zero { color: var(--muted); }
+/* the participant stays in view while a wide table scrolls sideways, and so does its column's header */
+tbody th, thead tr:first-child > th:first-child { position: sticky; left: 0; }
+/* NOTE: [edge case callout] Chrome paints each sticky cell on a layer of its own, and after the window is
+   resized it can place one a pixel off, over the line below the cell above it: so each sticky cell also
+   draws that line itself (a shadow 1px up), on top */
+tbody th { background: var(--surface); box-shadow: 0 -1px 0 var(--line); font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
+/* a long participant id wraps within 9rem (7rem on a phone) instead of widening the table and its sticky
+   column; width: max-content keeps a shorter id on one line, however narrow the table gets */
+.id { display: block; width: max-content; max-width: 9rem; white-space: normal; overflow-wrap: anywhere; }
+.pill { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.active { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------------- the timeline ---------------- */
+.timeline { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.timeline .day h3 { padding: 0.85rem 0.9rem 0.35rem; color: var(--muted); font-size: 0.78rem; font-weight: 600; }
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 10.5rem minmax(5rem, 9rem) minmax(4rem, 7rem) minmax(0, 1fr) auto;
+  grid-template-areas: "when who site what button" "details details details details details";
+  align-items: baseline;
+  column-gap: 0.9rem;
+  padding: 0.45rem 0.9rem 0.45rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+/* a mark at the left edge: blue for a judgment that says yes, green for answers, teal for a shared
+   conversation, amber for "not advice" or a skipped past conversation, red for a removed extension */
+.item::before { content: ""; position: absolute; left: 0.35rem; top: 0.55rem; bottom: 0.55rem; width: 3px; border-radius: 2px; background: var(--mark, transparent); }
+.item[data-tone="yes"] { --mark: var(--accent); }
+.item[data-tone="no"] { --mark: var(--line-strong); }
+.item[data-tone="answer"] { --mark: var(--good); }
+.item[data-tone="text"] { --mark: var(--teal); }
+.item[data-tone="skip"] { --mark: var(--warn); }
+.item[data-tone="alert"] { --mark: var(--bad); }
+.item[data-tone="yes"] .what strong { color: var(--accent); }
+.item.fresh { animation: arrived 6s ease-out; }
+@keyframes arrived { from { background: var(--accent-soft); } to { background: transparent; } }
+.when { grid-area: when; display: flex; align-items: baseline; gap: 0.5rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.when time { font-size: 0.875rem; font-weight: 600; }
+.ago { color: var(--muted); font-size: 0.78rem; }
+.who { grid-area: who; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 0.8rem; }
+.site { grid-area: site; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.85rem; }
+.what { grid-area: what; min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem; }
+.what strong { font-weight: 600; }
+.details-button { grid-area: button; align-self: center; padding: 0.12rem 0.6rem; font-size: 0.8rem; }
+.details-button[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.more { display: flex; justify-content: center; }
+.more button { margin: 0.8rem; }
+
+/* a row's details: answers, the conversation, the stored row */
+.details { grid-area: details; display: grid; gap: 0.85rem; min-width: 0; margin-top: 0.55rem; padding: 0.75rem; background: var(--sunken); border-radius: 8px; }
+.block h4 { margin-bottom: 0.35rem; color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.fields { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.2rem 1rem; margin: 0; font-size: 0.85rem; }
+.fields div { display: contents; }
+.fields dt { color: var(--muted); font-family: var(--mono); font-size: 0.8rem; }
+.fields dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.conversation { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+.conversation li { padding: 0.45rem 0.7rem; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--line-strong); border-radius: 6px; }
+.conversation li.user { border-left-color: var(--accent); }
+.conversation .role { color: var(--muted); font-size: 0.72rem; font-weight: 600; }
+.conversation p { margin: 0.15rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem; }
+.stored summary { cursor: pointer; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+pre {
+  max-height: 26rem;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.75rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: 0.78rem/1.5 var(--mono);
+}
+.block pre.text { font: 0.9rem/1.45 var(--sans); }
+
+/* ---------------- phone width ----------------
+   NOTE: [pedagogical] a media query adds no specificity, so these come last: of two rules equally
+   specific, the later one wins */
+@media (max-width: 760px) {
+  .filters, .filters label, .filters select { width: 100%; }
+  .item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "when when button" "who site site" "what what what" "details details details";
+    row-gap: 0.1rem;
+  }
+  .note { margin-left: 0; }
+  .id { max-width: 7rem; }
+  /* an answer's name above its value, so that a long answer gets the whole width */
+  .fields { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .fields dd { margin-bottom: 0.4rem; }
+}
