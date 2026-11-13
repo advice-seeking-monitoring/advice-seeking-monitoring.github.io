@@ -246,7 +246,9 @@ tbody th { background: var(--surface); box-shadow: 0 -1px 0 var(--line); font-fa
 .when time { font-size: 0.875rem; font-weight: 600; }
 .ago { color: var(--muted); font-size: 0.78rem; }
 .who { grid-area: who; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); font-size: 0.8rem; }
-.site { grid-area: site; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.85rem; }
+.where { grid-area: site; display: flex; flex-direction: column; min-width: 0; }
+.site { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 0.85rem; }
+.chat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; }
 .what { grid-area: what; min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem; }
 .what strong { font-weight: 600; }
 .details-button { grid-area: button; align-self: center; padding: 0.12rem 0.6rem; font-size: 0.8rem; }

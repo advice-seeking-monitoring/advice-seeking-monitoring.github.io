@@ -41,6 +41,7 @@ const monitorView = byId("monitor-view");
 const tiles = byId("tiles");
 const participantFilter = byId("filter-participant");
 const siteFilter = byId("filter-site");
+const chatFilter = byId("filter-chat");
 const windowFilter = byId("filter-window");
 const updatedLabel = byId("updated");
 const autoRefresh = byId("auto-refresh");
@@ -198,7 +199,7 @@ function signOut(message) {
   clearTimeout(refreshTimer);
   sessionStore?.clear();
   // nothing of the data stays in the page: every part it filled is emptied
-  for (const filled of [tiles, participantsBody, inFlightBody, timeline, participantFilter, siteFilter, emptyState, byId("account-label"),
+  for (const filled of [tiles, participantsBody, inFlightBody, timeline, participantFilter, siteFilter, chatFilter, emptyState, byId("account-label"),
                         byId("participants-count"), byId("in-flight-count"), byId("timeline-count")]) filled.replaceChildren();
   timelineNodes.clear();
   knownKeys = null;
@@ -259,7 +260,7 @@ function scheduleRefresh() {
 
 byId("refresh-now").addEventListener("click", refresh);
 autoRefresh.addEventListener("change", () => (autoRefresh.checked ? refresh() : clearTimeout(refreshTimer)));
-for (const filter of [participantFilter, siteFilter, windowFilter]) {
+for (const filter of [participantFilter, siteFilter, chatFilter, windowFilter]) {
   filter.addEventListener("change", () => {
     rowsShown = ROWS_AT_A_TIME;
     render(false);
@@ -271,6 +272,12 @@ showMoreButton.addEventListener("click", () => {
 });
 
 // ---------------- what the rows say ----------------
+// A chat's code: what the extension sends with each judgment (relay 0.6.6), and the first part of the id of each
+// of the chat's episodes ("5f3a9c1e" of "5f3a9c1e-1-3-mh7k2x1a"). Both are the extension's hash of the chat's key,
+// so a chat's judgments, answers, conversation and check-ins carry the same code. "" for a row without one: an
+// event about no episode (a heartbeat, say), or a judgment from an extension that does not send it.
+const chatOf = (episode) => (typeof episode === "string" && episode.includes("-") ? episode.slice(0, episode.indexOf("-")) : "");
+
 // Every stored row as one timeline entry, newest first. The events of one participant's episode are
 // numbered (episode 1, 2, ...) in the order the server got them, so its answers, conversation and
 // check-in are easy to match up; the episode's full id is in each row's details.
@@ -294,11 +301,12 @@ function timelineItems() {
       episode = numbers.get(payload.episode);
     }
     return { key: `event ${index} ${row.received_at}`, type: String(row.type), row, episode, at: row.received_at,
-             participant: row.participant_id,
+             participant: row.participant_id, chat: chatOf(payload.episode),
              site: String(payload.site ?? episodeSites.get(`${row.participant_id} ${payload.episode}`) ?? "") };
   });
   data.judgments.forEach((row, index) => items.push({ key: `judgment ${index} ${row.received_at}`, type: "judgment", row,
-                                                      at: row.received_at, participant: row.participant_id, site: String(row.site ?? "") }));
+                                                      at: row.received_at, participant: row.participant_id, site: String(row.site ?? ""),
+                                                      chat: typeof row.chat === "string" ? row.chat : "" }));
   // NOTE: [thought process] a judgment's received_at is when the extension asked for it; its row is
   // written once it is judged (queue.waited_s + queue.judge_s later), so it shows up at the time its
   // turn was sent, maybe below events that came in while it was being judged
@@ -553,7 +561,11 @@ function timelineNode(item) {
       element("time", { datetime: asDate(item.at).toISOString() }, clockFormat.format(asDate(item.at))),
       element("span", { class: "ago", "data-ago": item.at }, ago(item.at))),
     element("span", { class: "who", title: item.participant }, item.participant),
-    element("span", { class: "site", title: item.site }, item.site || "—"),
+    // (the chat's code under the site, in the same column: a column of its own would leave the summary little room)
+    element("span", { class: "where" },
+      element("span", { class: "site", title: item.site }, item.site || "—"),
+      element("span", { class: "chat", title: item.chat ? `chat ${item.chat}: the same code on every row of this conversation` : null },
+              item.chat)),
     element("span", { class: "what" }, ...summary),
     button,
     panel);
@@ -608,10 +620,17 @@ function render(arrived) {
   fillSelect(siteFilter, "All sites", sites);
   const participant = participantFilter.value;
   const site = siteFilter.value;
+  // the chat filter offers the chats of the participant chosen (of everyone when none is)
+  const chats = [...new Set([...everyItem.filter((item) => !participant || item.participant === participant).map((item) => item.chat),
+                             ...data.in_flight.filter((job) => !participant || job.participant_id === participant).map((job) => job.chat)])]
+    .filter((code) => typeof code === "string" && code).sort(naturalOrder);
+  fillSelect(chatFilter, "All chats", chats);
+  const chat = chatFilter.value;
   const since = relayNow() - WINDOW_SECONDS[windowFilter.value];
   const shownItems = everyItem.filter((item) => (!participant || item.participant === participant) && (!site || item.site === site)
-                                                && item.at >= since);
-  const shownJobs = data.in_flight.filter((job) => (!participant || job.participant_id === participant) && (!site || job.site === site));
+                                                && (!chat || item.chat === chat) && item.at >= since);
+  const shownJobs = data.in_flight.filter((job) => (!participant || job.participant_id === participant) && (!site || job.site === site)
+                                                   && (!chat || job.chat === chat));
   const nothingYet = ids.length === 0;
   emptyState.textContent = "No participant yet.";
   emptyState.hidden = !nothingYet;
