@@ -1,8 +1,9 @@
 <!doctype html>
-<!-- The Advice Tracker test monitor: what the study's test participants did, for the study team. The
+<!-- The Advice Tracker test monitor: what the study's participants did, for the study team. The
      page holds no data. config.js (written when the page is published) names the study server; after
-     sign-in, app.js reads everything shown here from that server. Only test participants (participant
-     IDs that start with TEST-) ever reach the page: the server sends no other rows.
+     sign-in, app.js reads everything shown here from that server. The text of a shared conversation
+     reaches the page only for test participants (participant IDs that start with TEST-): the server sends
+     everyone else's conversations without it.
      The Content-Security-Policy below lets the page run its own two scripts and nothing else (no inline
      script or style, no resource from another site), and talk only to an https server or this computer. -->
 <html lang="en">
@@ -24,7 +25,7 @@
 <main id="sign-in-view" class="sign-in" hidden>
   <form id="sign-in-form" class="card" method="post" aria-labelledby="sign-in-title">
     <h1 id="sign-in-title">Advice Tracker test monitor</h1>
-    <p class="lead">For the study team: what the test participants are doing, read live from the study server.</p>
+    <p class="lead">For the study team: what the participants are doing, read live from the study server. Conversations show their text only for test IDs (TEST-).</p>
     <label for="account-name">Account name</label>
     <input id="account-name" autocomplete="username" autocapitalize="none" spellcheck="false" required>
     <label for="password">Password</label>
@@ -79,7 +80,7 @@
       </div>
       <div class="table-scroll">
         <table id="participants">
-          <caption class="visually-hidden">One row per test participant</caption>
+          <caption class="visually-hidden">One row per participant</caption>
           <thead>
             <tr>
               <th scope="col" rowspan="2">Participant</th>

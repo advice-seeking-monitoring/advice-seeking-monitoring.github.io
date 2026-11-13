@@ -1,12 +1,14 @@
-// The Advice Tracker test monitor, for the study team: what the test participants (participant IDs
-// that start with TEST-) are doing, read live from the study server. The page holds no data:
+// The Advice Tracker test monitor, for the study team: what the participants are doing, read live
+// from the study server. The page holds no data:
 // config.js names the server, and everything shown comes from it after sign-in:
 //   POST /dashboard/login  {name, password}              -> {token, name, expires_at (ms)}
 //   GET  /dashboard/data   Authorization: Bearer <token> -> {prefix, generated_at, relay, judgments,
 //                                                           events, in_flight}
 //   GET  /health           (open)                        -> the server tiles
-// `judgments` and `events` are the test participants' rows of the server's judgments.jsonl and
-// events.jsonl, as stored; `in_flight` the judgments queued or being judged now (never their texts).
+// `judgments` and `events` are every participant's rows of the server's judgments.jsonl and
+// events.jsonl: the test participants' (IDs that start with `prefix`) as stored, everyone else's with the
+// text of their conversations replaced by "(not shown on the monitor)", their messages and roles kept
+// (relay 0.6.5); `in_flight` the judgments queued or being judged now (never their texts).
 // NOTE: [thought process] every piece of data goes into the page as text, through element() below.
 // A transcript holds whatever a participant typed, and markup in it must show as the characters it
 // is, never run. The Content-Security-Policy in index.html is a second wall: no inline script runs.
@@ -602,7 +604,7 @@ function render(arrived) {
   const naturalOrder = (a, b) => a.localeCompare(b, undefined, { numeric: true });     // TEST-2 before TEST-10
   const ids = [...new Set([...everyItem.map((item) => item.participant), ...data.in_flight.map((job) => job.participant_id)])].sort(naturalOrder);
   const sites = [...new Set([...everyItem.map((item) => item.site), ...data.in_flight.map((job) => job.site)])].filter(Boolean).sort(naturalOrder);
-  fillSelect(participantFilter, "All test participants", ids);
+  fillSelect(participantFilter, "All participants", ids);
   fillSelect(siteFilter, "All sites", sites);
   const participant = participantFilter.value;
   const site = siteFilter.value;
@@ -611,7 +613,7 @@ function render(arrived) {
                                                 && item.at >= since);
   const shownJobs = data.in_flight.filter((job) => (!participant || job.participant_id === participant) && (!site || job.site === site));
   const nothingYet = ids.length === 0;
-  emptyState.textContent = `No test participant yet. Participant IDs must start with ${data.prefix}.`;
+  emptyState.textContent = "No participant yet.";
   emptyState.hidden = !nothingYet;
   byId("participants-section").hidden = nothingYet;
   byId("timeline-section").hidden = nothingYet;
